@@ -41,8 +41,6 @@ class ScanFiles(object):
         self.skipped_exclude_files = 0
         self.skipped_include_files = 0
 
-        self.checksum = dict()
-
         self.scanned_files = set()
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -77,47 +75,6 @@ class ScanFiles(object):
         assert type(file_p) is str
 
         return os.path.split(file_p)[1][0] == "."
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def store_checksum_in_cache(self,
-                                file_p,
-                                checksum):
-        """
-        Caches the checksum for the given file path in a dictionary.
-
-        :param file_p:
-            The path to the file for which we want to store the checksum.
-        :param checksum:
-            The checksum value to be cached
-
-        :return:
-            Nothing.
-        """
-
-        assert type(file_p) is str
-        assert type(checksum) is str
-
-        self.checksum[file_p] = checksum
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def retrieve_checksum_from_cache(self,
-                                     file_p):
-        """
-        Tries to load the checksum from the checksum dictionary. If there is no checksum available, returns None.
-
-        :param file_p:
-            The path to the file for which we want to get the stored checksum.
-
-        :return:
-            The checksum that was stored. If there was no stored checksum, returns None.
-        """
-
-        assert type(file_p) is str
-
-        try:
-            return self.checksum[file_p]
-        except KeyError:
-            return None
 
     # ------------------------------------------------------------------------------------------------------------------
     @staticmethod
@@ -242,37 +199,32 @@ class ScanFiles(object):
 
     # ------------------------------------------------------------------------------------------------------------------
     def scan_directories(self,
-                         scan_dirs,
-                         uid,
-                         gid):
+                         scan_dirs):
         """
         Scan a list of directories and store the metadata for every file (optionally include subdirectories).
 
         :param scan_dirs:
             A list containing full paths to directories to scan.
-        :param uid:
-            The user id of the user running the script
-        :param gid:
-            The group id of the user running the script
 
         :return:
             Nothing.
         """
 
         assert type(scan_dirs) in [list, set, tuple]
-        assert type(uid) is int
-        assert type(gid) is int
 
         for scan_dir in scan_dirs:
-            for _ in self.scan_directory(scan_dir=scan_dir, root_p=scan_dir, uid=uid, gid=gid):
+            for _ in self._scan_directory(scan_dir=scan_dir,
+                                          root_p=scan_dir,
+                                          uid=self.options.uid,
+                                          gid=self.options.gid):
                 yield self.checked_count
 
     # ------------------------------------------------------------------------------------------------------------------
-    def scan_directory(self,
-                       scan_dir,
-                       root_p,
-                       uid,
-                       gid):
+    def _scan_directory(self,
+                        scan_dir,
+                        root_p,
+                        uid,
+                        gid):
         """
         Recursively scan an entire directory and its subdirectories and store the metadata for every file.
 
@@ -326,10 +278,10 @@ class ScanFiles(object):
                             yield self.checked_count
                             continue
 
-                    yield from self.scan_directory(scan_dir=entry.path, root_p=root_p, uid=uid, gid=gid)
+                    yield from self._scan_directory(scan_dir=entry.path, root_p=root_p, uid=uid, gid=gid)
                     continue
 
-                self.scan_file(file_p=entry.path, root_p=root_p, uid=uid, gid=gid)
+                self._scan_file(file_p=entry.path, root_p=root_p, uid=uid, gid=gid)
                 if self.checked_count % self.options.report_frequency == 0:
                     yield self.checked_count
 
@@ -341,9 +293,7 @@ class ScanFiles(object):
     # ------------------------------------------------------------------------------------------------------------------
     def scan_files(self,
                    files_p,
-                   root_p,
-                   uid,
-                   gid):
+                   root_p):
         """
         Scan a specific list of files and store the metadata for every file.
 
@@ -351,10 +301,6 @@ class ScanFiles(object):
             A list, set, or tuple of files (with full paths).
         :param root_p:
             The root path against which a relative path for the files can be extracted.
-        :param uid:
-            The user id of the user running the script
-        :param gid:
-            The group id of the user running the script
 
         :return:
             Nothing.
@@ -362,8 +308,6 @@ class ScanFiles(object):
 
         assert type(files_p) in [list, set, tuple]
         assert type(root_p) is str
-        assert type(uid) is int
-        assert type(gid) is int
 
         for file_p in files_p:
 
@@ -371,16 +315,16 @@ class ScanFiles(object):
                 self.skipped_links += 1
                 return
 
-            self.scan_file(file_p=file_p, root_p=root_p, uid=uid, gid=gid)
+            self._scan_file(file_p=file_p, root_p=root_p, uid=self.options.uid, gid=self.options.gid)
             if self.checked_count % self.options.report_frequency == 0:
                 yield self.checked_count
 
     # ------------------------------------------------------------------------------------------------------------------
-    def scan_file(self,
-                  file_p,
-                  root_p,
-                  uid,
-                  gid):
+    def _scan_file(self,
+                   file_p,
+                   root_p,
+                   uid,
+                   gid):
         """
         Scan a single file and stores its metadata.
 
