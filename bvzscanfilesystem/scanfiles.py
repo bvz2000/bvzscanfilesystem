@@ -26,6 +26,7 @@ class ScanFiles(object):
         self.file_permission_err_files = set()
         self.dir_permission_err_dirs = set()
         self.file_not_found_err_files = set()
+        self.dir_not_found_err_dirs = set()
         self.dir_generic_err_dirs = set()
         self.file_generic_err_files = set()
 
@@ -245,15 +246,15 @@ class ScanFiles(object):
         assert type(root_p) is str
         assert type(uid) is int
         assert type(gid) is int
-
-        if not scan_dir:
-            raise IOError("No directory has been set to scan.")
-
-        if not os.path.exists(scan_dir):
-            raise IOError(f"The directory {scan_dir} does not exist")
-
-        if not os.path.isdir(scan_dir):
-            raise IOError(f"The path {scan_dir} is not a directory")
+        #
+        # if not scan_dir:
+        #     raise IOError("No directory has been set to scan.")
+        #
+        # if not os.path.exists(scan_dir):
+        #     raise IOError(f"The directory {scan_dir} does not exist")
+        #
+        # if not os.path.isdir(scan_dir):
+        #     raise IOError(f"The path {scan_dir} is not a directory")
 
         try:
 
@@ -289,6 +290,16 @@ class ScanFiles(object):
 
             self.error_count += 1
             self.dir_permission_err_dirs.add(scan_dir)
+
+        except FileNotFoundError:
+
+            self.error_count += 1
+            self.dir_not_found_err_dirs.add(scan_dir)
+
+        except OSError:
+
+            self.error_count += 1
+            self.dir_generic_err_dirs.add(scan_dir)
 
     # ------------------------------------------------------------------------------------------------------------------
     def scan_files(self,
