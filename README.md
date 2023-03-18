@@ -1,3 +1,10 @@
+# DEPRECIATED
+(Use bvzos instead)
+
+
+Original readme below:
+
+
 # bvzscanfilesystem
 
 A python library to scan one or more directories (or a simple list of files) and return an object which contains a filtered dictionary of those same files where the key is the full path to the file, and the value is a list of attributes for that file.
