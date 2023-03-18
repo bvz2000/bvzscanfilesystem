@@ -4,7 +4,7 @@ import os.path
 import re
 import stat
 
-import bvzcomparefiles
+from bvzcomparefiles import comparefiles
 
 
 class ScanFiles(object):
@@ -351,7 +351,7 @@ class ScanFiles(object):
                 return
 
         try:
-            attrs = bvzcomparefiles.get_metadata(file_p=file_p, root_p=root_p)
+            attrs = comparefiles.get_metadata(file_p=file_p, root_p=root_p)
         except FileNotFoundError:
             self.error_count += 1
             self.file_not_found_err_files.add(file_p)
